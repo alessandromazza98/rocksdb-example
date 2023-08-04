@@ -13,7 +13,6 @@ fn main() {
     let path = "./database";
     // open db with default options
     let db = DB::open_default(path).unwrap();
-
     // parse the Cli from the command line
     let cli = Cli::parse();
 
@@ -23,68 +22,6 @@ fn main() {
         Commands::GetNote { id } => get_note_from_db(&db, id).unwrap(),
         Commands::ListNotes {} => list_notes_from_db(&db).unwrap(),
     };
-
-    /*
-    // create a note
-    let note_1 = Note::new(0, "Questa è la storia numero 0".to_string());
-
-    // save the note in the db, use id as key
-    add_note(&db, &note_1).unwrap();
-
-    // retrieve the value
-    match get_node(&db, 0) {
-        Ok(Some(value)) => println!("retrieved value: {}", String::from_utf8(value).unwrap()),
-        Ok(None) => println!("value not found"),
-        Err(e) => println!("operational problem encountered: {}", e),
-    }
-
-    // create a note
-    let note_2 = Note::new(1, "Questa è la nota numero 1".to_string());
-
-    // save the note in the db, use id as key
-    add_note(&db, &note_2).unwrap();
-
-    // retrieve the value
-    match get_node(&db, 1) {
-        Ok(Some(value)) => println!("retrieved value: {}", String::from_utf8(value).unwrap()),
-        Ok(None) => println!("value not found"),
-        Err(e) => println!("operational problem encountered: {}", e),
-    }
-
-    // retrieve all values
-    println!("printing all values in the database...");
-    match list_notes(&db) {
-        Ok(notes) => {
-            notes.iter().for_each(|value| {
-                println!(
-                    "retrieved value: {}",
-                    String::from_utf8(value.to_owned()).unwrap()
-                );
-            });
-        }
-        Err(e) => println!("operational problem encountered: {}", e),
-    }
-
-    // delete a note
-    match delete_node(&db, 0) {
-        Ok(()) => println!("note deleted"),
-        Err(e) => println!("operational problem encountered: {}", e),
-    }
-
-    // retrieve all values
-    println!("printing all values in the database...");
-    match list_notes(&db) {
-        Ok(notes) => {
-            notes.iter().for_each(|value| {
-                println!(
-                    "retrieved value: {}",
-                    String::from_utf8(value.to_owned()).unwrap()
-                );
-            });
-        }
-        Err(e) => println!("operational problem encountered: {}", e),
-    }
-    */
 }
 
 fn add_note_to_db(db: &DB, id: u64, content: String) -> Result<(), rocksdb::Error> {
@@ -122,5 +59,36 @@ fn list_notes_from_db(db: &DB) -> Result<(), rocksdb::Error> {
             println!("operational problem encountered: {}", e);
             Err(e)
         }
+    }
+}
+
+#[cfg(test)]
+mod test {
+    use clap::Parser;
+
+    use crate::cli::{Cli, Commands};
+
+    #[test]
+    fn parse_add_note() {
+        let cli = Cli::parse_from(["rocksdb-example", "add-note", "--id", "0", "--content", "Ale nota 1"]);
+        assert!(matches!(cli.command, Commands::AddNote { id: 0, content: ref c } if c == "Ale nota 1"));
+    }
+
+    #[test]
+    fn parse_get_note() {
+        let cli = Cli::parse_from(["rocksdb-example", "get-note", "--id", "0"]);
+        assert!(matches!(cli.command, Commands::GetNote { id: 0 }));
+    }
+
+    #[test]
+    fn parse_delete_note() {
+        let cli = Cli::parse_from(["rocksdb-example", "delete-note", "--id", "0"]);
+        assert!(matches!(cli.command, Commands::DeleteNote { id: 0 }));
+    }
+
+    #[test]
+    fn parse_list_notes() {
+        let cli = Cli::parse_from(["rocksdb-example", "list-notes"]);
+        assert!(matches!(cli.command, Commands::ListNotes {}));
     }
 }
