@@ -1,9 +1,18 @@
 use crate::notes::Note;
-use rocksdb::DB;
+use rocksdb::{WriteBatch, DB};
 
 /// Add a note to the database.
 pub fn add_note(db: &DB, note: &Note) -> Result<(), rocksdb::Error> {
     db.put(note.get_id().to_le_bytes(), note.get_content().as_bytes())
+}
+
+/// Add a batch of notes to the database.
+pub fn add_notes(db: &DB, notes: &[Note]) -> Result<(), rocksdb::Error> {
+    let mut batch = WriteBatch::default();
+    notes
+        .iter()
+        .for_each(|note| batch.put(note.get_id().to_le_bytes(), note.get_content().as_bytes()));
+    db.write(batch)
 }
 
 /// Delete a note from the database.

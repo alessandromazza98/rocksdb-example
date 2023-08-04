@@ -1,6 +1,6 @@
 use clap::Parser;
 use cli::{Cli, Commands};
-use db::{add_note, delete_note, get_note, list_notes};
+use db::{add_note, add_notes, delete_note, get_note, list_notes};
 use notes::Note;
 use rocksdb::DB;
 
@@ -18,6 +18,7 @@ fn main() {
 
     match cli.command {
         Commands::AddNote { id, content } => add_note_to_db(&db, id, content).unwrap(),
+        Commands::AddNotes { note } => add_notes_to_db(&db, note).unwrap(),
         Commands::DeleteNote { id } => delete_note_from_db(&db, id).unwrap(),
         Commands::GetNote { id } => get_note_from_db(&db, id).unwrap(),
         Commands::ListNotes {} => list_notes_from_db(&db).unwrap(),
@@ -27,6 +28,14 @@ fn main() {
 fn add_note_to_db(db: &DB, id: u64, content: String) -> Result<(), rocksdb::Error> {
     let note = Note::new(id, content);
     add_note(db, &note)
+}
+
+fn add_notes_to_db(db: &DB, notes: Vec<(u64, String)>) -> Result<(), rocksdb::Error> {
+    let notes: Vec<Note> = notes
+        .into_iter()
+        .map(|(id, content)| Note::new(id, content))
+        .collect();
+    add_notes(db, &notes)
 }
 
 fn delete_note_from_db(db: &DB, id: u64) -> Result<(), rocksdb::Error> {
@@ -70,8 +79,32 @@ mod test {
 
     #[test]
     fn parse_add_note() {
-        let cli = Cli::parse_from(["rocksdb-example", "add-note", "--id", "0", "--content", "Ale nota 1"]);
-        assert!(matches!(cli.command, Commands::AddNote { id: 0, content: ref c } if c == "Ale nota 1"));
+        let cli = Cli::parse_from([
+            "rocksdb-example",
+            "add-note",
+            "--id",
+            "0",
+            "--content",
+            "Ale nota 1",
+        ]);
+        assert!(
+            matches!(cli.command, Commands::AddNote { id: 0, content: ref c } if c == "Ale nota 1")
+        );
+    }
+
+    #[test]
+    fn parse_add_notes() {
+        let cli = Cli::parse_from([
+            "rocksdb-example",
+            "add-notes",
+            "--note",
+            "0 nota0",
+            "--note",
+            "1 nota1",
+        ]);
+        assert!(
+            matches!(cli.command, Commands::AddNotes { note } if note == vec![(0, "nota0".to_string()), (1, "nota1".to_string())])
+        );
     }
 
     #[test]

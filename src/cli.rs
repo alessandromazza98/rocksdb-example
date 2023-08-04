@@ -1,3 +1,4 @@
+use crate::notes::notes_value_parser;
 use clap::{Parser, Subcommand};
 
 #[derive(Parser, Debug)]
@@ -13,6 +14,10 @@ pub enum Commands {
         id: u64,
         #[arg(long)]
         content: String,
+    },
+    AddNotes {
+        #[arg(long, value_parser = notes_value_parser)]
+        note: Vec<(u64, String)>,
     },
     GetNote {
         #[arg(long)]
